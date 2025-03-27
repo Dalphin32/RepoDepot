@@ -3,19 +3,39 @@
  */
 package repodepot;
 
+import java.util.Scanner;
+
 public class App {
 
     public static void main(String[] args) {
-        String connectionString = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-        try (MongoClient mongoClient = MongoClients.create(connectionString)) {
-            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
-            MongoCollection<Document> collection = database.getCollection("users");
-            /*Document doc = collection.find(eq("title", "Back to the Future")).first();
-            if (doc != null) {
-                System.out.println(doc.toJson());
-            } else {
-                System.out.println("No matching documents found.");
-            }*/
+        Scanner scnr = new Scanner(System.in);
+
+        System.out.println("________________________________________________________________");
+        System.out.println("    /'\\      /'''''\\   /'''''\\   /'''''\\   |'''''''\\   |'''''\\  ");
+        System.out.println("   /   \\    |  ____/  |  ____/  |  |'|  |  |  | |   |  | |'|  \\ ");
+        System.out.println("  /=====\\   |  |      |  |      |  | |  |  |   _   /   | | |   |");
+        System.out.println(" /       \\  |  ''''\\  |  ''''\\  |  |_|  |  |  | \\  \\   | |_|  / ");
+        System.out.println("/         \\  \\_____/   \\_____/   \\_____/   |__|  \\__\\  |_____/  ");
+        System.out.println("________________________________________________________________");
+        System.out.println("");
+        System.out.println("[1] Login");
+        System.out.println("[2] Sign up");
+        String log_or_sign = scnr.nextLine();
+        if (log_or_sign == "1"){
+            //bring to log in page
+        } else if (log_or_sign == "2"){
+            //bring to sign up page
         }
     }
 }
+
+
+
+
+/*String connectionString = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(connectionString)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("users");
+            
+            
+        }*/
