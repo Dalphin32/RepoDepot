@@ -4,6 +4,25 @@
 package repodepot;
 
 import java.util.Scanner;
+import java.util.Arrays;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
+import com.mongodb.MongoException;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Projections;
+import com.mongodb.client.result.InsertOneResult;
+import static com.mongodb.client.model.Filters.eq;
+import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
+
+import org.bson.conversions.Bson;
 
 public class App {
 
@@ -21,10 +40,96 @@ public class App {
         System.out.println("[1] Login");
         System.out.println("[2] Sign up");
         String log_or_sign = scnr.nextLine();
-        if (log_or_sign == "1"){
-            //bring to log in page
-        } else if (log_or_sign == "2"){
-            //bring to sign up page
+        if (log_or_sign.equals("1")){
+
+            //log in
+        } else if (log_or_sign.equals("2")){
+            System.out.println("Welcome new user!! Lets get you an");
+            System.out.println("Please enter a username(must not contain spaces): ");
+            String userName = scnr.nextLine();  // Read user input
+            while(userName.contains(" ") || alreadyUsed(userName)){
+                if(userName.contains(" ")){
+                    System.out.println("Please enter a username(must not contain spaces): ");
+                    userName = scnr.nextLine();  // Read user input
+                }else{
+                    System.out.println("That username is already taken please select a new one: ");
+                    userName = scnr.nextLine();  // Read user input
+                }
+                
+            }
+
+
+            System.out.println("Please enter a password(must be at least 8 characters): ");
+            String pass = scnr.nextLine();  // Read user input
+            while(pass.length()< 8){
+                System.out.println("Password must be at least 8 characters: ");
+                pass = scnr.nextLine();  // Read user input
+            }
+            System.out.println("Please re-enter your password: ");
+            String checkpass = scnr.nextLine();  // Read user input
+            while(!(pass.equals(checkpass))){
+                System.out.println("Your password does not match, please re-enter the correct password: ");
+                checkpass = scnr.nextLine();  // Read user input
+            }
+
+
+
+            System.out.println("Please enter a security question to verify your account: ");
+            String securityQuestion = scnr.nextLine();  // Read user input
+
+            System.out.println("Please enter your bio: ");
+            String bio = scnr.nextLine();  // Read user input
+
+            System.out.println("Please enter youre name: ");
+            String name = scnr.nextLine();  // Read user input
+
+            System.out.println(create(userName, pass, securityQuestion, bio, name));
+        }
+    }
+
+
+
+
+
+
+
+    static String create(String username, String pass, String securityQuestion, String bio, String name){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("users");
+            try {
+                // Inserts a sample document describing a movie into the collection
+                InsertOneResult result = collection.insertOne(new Document()
+                        .append("_id", new ObjectId())
+                        .append("UserName", username)
+                        .append("Password", pass)
+                        .append("Question", securityQuestion)
+                        .append("Bio", bio)
+                        .append("Name", name));
+                // Prints the ID of the inserted document
+                //redirect to home
+                return "Your account has been added!";
+            
+            // Prints a message if any exceptions occur during the operation
+            } catch (MongoException me) {
+                return "Unable to insert due to an error: " + me;
+            }
+        }
+    }
+    static Boolean alreadyUsed(String username){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("users");
+            Bson projectionFields = Projections.fields(
+                    Projections.include("UserName"),
+                    Projections.excludeId());
+                    Document doc = collection.find(eq("UserName", username)).projection(projectionFields).first();
+                    if(doc == null){
+                        return false;
+                    }
+                    return true;
         }
     }
 }
