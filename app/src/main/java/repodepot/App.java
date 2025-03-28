@@ -83,7 +83,9 @@ public class App {
             System.out.println("Please enter youre name: ");
             String name = scnr.nextLine();  // Read user input
 
-            System.out.println(create(userName, pass, securityQuestion, bio, name));
+            if(create(userName, pass, securityQuestion, bio, name)){
+                home();
+            }
         }
     }
 
@@ -93,7 +95,7 @@ public class App {
 
 
 
-    static String create(String username, String pass, String securityQuestion, String bio, String name){
+    static Boolean create(String username, String pass, String securityQuestion, String bio, String name){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
@@ -109,11 +111,11 @@ public class App {
                         .append("Name", name));
                 // Prints the ID of the inserted document
                 //redirect to home
-                return "Your account has been added!";
+                return true;
             
             // Prints a message if any exceptions occur during the operation
             } catch (MongoException me) {
-                return "Unable to insert due to an error: " + me;
+                return false;
             }
         }
     }
@@ -131,7 +133,6 @@ public class App {
                     }
                     return true;
         }
-        home();
     }
 
     public static void home(){
