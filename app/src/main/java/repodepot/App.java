@@ -41,10 +41,42 @@ public class App {
         System.out.println("[2] Sign up");
         String log_or_sign = scnr.nextLine();
         if (log_or_sign.equals("1")){
+            System.out.println("Welcome!! Lets get you logged in!!");
+            System.out.println("Enter your username: ");
+            String userName = scnr.nextLine();  // Read user input
+            System.out.println("Password: ");
+            String pass = scnr.nextLine();  // Read user input
+
+
+            System.out.println("Your account has still not been found, would you like to create a new one?[Y or N]: ");
+            String newOne = scnr.nextLine();  // Read user input
+            if(newOne.equals("Y")){
+                if(create()){
+                    home();
+                }
+            }
+
 
             //log in
         } else if (log_or_sign.equals("2")){
-            System.out.println("Welcome new user!! Lets get you an");
+
+            if(create()){
+                System.out.println("Your account was successfully created!!");
+                home();
+            }
+        }
+        scnr.close();
+    }
+
+
+
+
+
+
+
+    static Boolean create(){
+        Scanner scnr = new Scanner(System.in);
+        System.out.println("Welcome new user!! Lets get you an account");
             System.out.println("Please enter a username(must not contain spaces): ");
             String userName = scnr.nextLine();  // Read user input
             while(userName.contains(" ") || alreadyUsed(userName)){
@@ -82,20 +114,7 @@ public class App {
 
             System.out.println("Please enter youre name: ");
             String name = scnr.nextLine();  // Read user input
-
-            if(create(userName, pass, securityQuestion, bio, name)){
-                home();
-            }
-        }
-    }
-
-
-
-
-
-
-
-    static Boolean create(String username, String pass, String securityQuestion, String bio, String name){
+        scnr.close();
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
@@ -104,7 +123,7 @@ public class App {
                 // Inserts a sample document describing a movie into the collection
                 InsertOneResult result = collection.insertOne(new Document()
                         .append("_id", new ObjectId())
-                        .append("UserName", username)
+                        .append("UserName", userName)
                         .append("Password", pass)
                         .append("Question", securityQuestion)
                         .append("Bio", bio)
@@ -118,7 +137,10 @@ public class App {
                 return false;
             }
         }
+        
     }
+
+
     static Boolean alreadyUsed(String username){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
