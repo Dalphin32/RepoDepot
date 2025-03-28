@@ -131,6 +131,37 @@ public class App {
                     }
                     return true;
         }
+        home();
+    }
+
+    public static void home(){
+        Scanner scnr = new Scanner(System.in);
+
+        System.out.println("Welcome [USERNAME]");
+        System.out.println("[1] Send Message");
+        System.out.println("[2] See Users");
+        System.out.println("[3] Rooms");
+        System.out.println("[4] Check Messages");
+        System.out.println("[5] Update Profile");
+        String opt = scnr.nextLine();
+
+        switch(opt){
+            case "1":
+                //send message
+            break;
+            case "2":
+                //see users
+            break;
+            case "3":
+                //rooms
+            break;
+            case "4":
+                //check messages
+            break;
+            case "5":
+                //update profile
+            break;
+        }
     }
 }
 
