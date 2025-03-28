@@ -164,6 +164,29 @@ public class App {
             break;
         }
     }
+
+    public static void createRoom(String roomName, String decription){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("rooms");
+            try {
+                // Inserts a sample document describing a movie into the collection
+                InsertOneResult result = collection.insertOne(new Document()
+                        .append("name: ", roomname)
+                        .append("decription: ", decription));
+                // Prints the name of the inserted document
+                System.out.println("Success! you created the " + roomname + " room." );
+            
+            // Prints a message if any exceptions occur during the operation
+            } catch (MongoException me) {
+                System.err.println("Unable to insert due to an error: " + me);
+            }
+        }
+        if(createRoom(roomName, description)){
+            home();
+        }
+    }
 }
 
 
