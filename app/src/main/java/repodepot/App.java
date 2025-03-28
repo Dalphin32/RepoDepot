@@ -47,6 +47,16 @@ public class App {
             System.out.println("Password: ");
             String pass = scnr.nextLine();  // Read user input
 
+
+            System.out.println("Your account has still not been found, would you like to create a new one?[Y or N]: ");
+            String newOne = scnr.nextLine();  // Read user input
+            if(newOne.equals("Y")){
+                if(create()){
+                    home();
+                }
+            }
+
+
             //log in
         } else if (log_or_sign.equals("2")){
 
@@ -55,6 +65,7 @@ public class App {
                 home();
             }
         }
+        scnr.close();
     }
 
 
@@ -103,6 +114,7 @@ public class App {
 
             System.out.println("Please enter youre name: ");
             String name = scnr.nextLine();  // Read user input
+        scnr.close();
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
@@ -125,6 +137,7 @@ public class App {
                 return false;
             }
         }
+        
     }
 
 
