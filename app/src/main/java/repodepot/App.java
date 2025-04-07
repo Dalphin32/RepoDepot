@@ -51,12 +51,24 @@ public class App {
             }
             int x = 0;
             while(x<3){
+<<<<<<< Updated upstream
                 System.out.println("UserName or password is incorrect please re-enter");
                 System.out.println("Enter your username: ");
                 userName = scnr.nextLine();  // Read user input
                 System.out.println("Password: ");
                 pass = scnr.nextLine();  // Read user input
                 if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
+=======
+                System.out.println("UserName or password");
+            }
+            //FIND THE PASSWORD FOR THIS USERNAME
+
+
+            System.out.println("Your account has still not been found, would you like to create a new one?[Y or N]: ");
+            String newOne = scnr.nextLine();  // Read user input
+            if(newOne.equals("Y")){
+                if(create()){
+>>>>>>> Stashed changes
                     home();
                 }
                 x++;
@@ -231,6 +243,16 @@ public class App {
             case "5":
                 //update profile
             break;
+        }
+    }
+
+    public static void sendMessage(String body, String user){
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("messages");
+            try{
+                
+            }
         }
     }
 
