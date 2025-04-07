@@ -148,15 +148,15 @@ public class App {
 
     static String[] getUser(String name){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-        try (MongoClient mongoClint = MongoClients.create(uri)){
+        try (MongoClient mongoClient = MongoClients.create(uri)){
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
-            MongoCollection<Document> collection = databse.getCollection("users");
+            MongoCollection<Document> collection = database.getCollection("users");
             Document doc = collection.find(eq("username", name)).first();
             if (doc == null){
-                return;
+                return new String[0];
             }
             else{
-                user = new String[2];
+                String[] user = new String[2];
                 user[0] = doc.get("username");
                 user[1] = doc.get("password");
                 return user;
