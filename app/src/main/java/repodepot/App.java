@@ -46,6 +46,12 @@ public class App {
             String userName = scnr.nextLine();  // Read user input
             System.out.println("Password: ");
             String pass = scnr.nextLine();  // Read user input
+            /*if(alreadyUsed(userName) && )*/
+            int x = 0;
+            while(x<3){
+                System.out.println("UserName or password")
+            }
+            //FIND THE PASSWORD FOR THIS USERNAME
 
 
             System.out.println("Your account has still not been found, would you like to create a new one?[Y or N]: ");
@@ -187,7 +193,7 @@ public class App {
         }
     }
 
-    public static void createRoom(String roomName, String decription){
+    public static void createRoom(String roomName, String description){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
@@ -195,19 +201,20 @@ public class App {
             try {
                 // Inserts a sample document describing a movie into the collection
                 InsertOneResult result = collection.insertOne(new Document()
-                        .append("name: ", roomname)
-                        .append("decription: ", decription));
+                        .append("name: ", roomName)
+                        .append("decription: ", description));
                 // Prints the name of the inserted document
-                System.out.println("Success! you created the " + roomname + " room." );
+                //System.out.println("Success! you created the " + roomName + " room." );
+                home();
             
             // Prints a message if any exceptions occur during the operation
             } catch (MongoException me) {
                 System.err.println("Unable to insert due to an error: " + me);
             }
         }
-        if(createRoom(roomName, description)){
+        /*if(createRoom(roomName, description)){
             home();
-        }
+        }*/
     }
 }
 
