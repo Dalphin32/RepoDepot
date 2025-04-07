@@ -46,21 +46,44 @@ public class App {
             String userName = scnr.nextLine();  // Read user input
             System.out.println("Password: ");
             String pass = scnr.nextLine();  // Read user input
-            /*if(alreadyUsed(userName) && )*/
+            if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
+                home();
+            }
             int x = 0;
             while(x<3){
-                System.out.println("UserName or password")
-            }
-            //FIND THE PASSWORD FOR THIS USERNAME
-
-
-            System.out.println("Your account has still not been found, would you like to create a new one?[Y or N]: ");
-            String newOne = scnr.nextLine();  // Read user input
-            if(newOne.equals("Y")){
-                if(create()){
+                System.out.println("UserName or password is incorrect please re-enter");
+                System.out.println("Enter your username: ");
+                userName = scnr.nextLine();  // Read user input
+                System.out.println("Password: ");
+                pass = scnr.nextLine();  // Read user input
+                if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
                     home();
                 }
+                x++;
             }
+            //FIND THE PASSWORD FOR THIS USERNAME
+            System.out.println("Bro your account still isn't found you wanna create a new one?[Y or N]: ");
+            String newOne = scnr.nextLine();  // Read user input
+            do{
+                if(newOne.equals("Y")){
+                    if(create()){
+                        home();
+                    }
+                }
+                System.out.println("UserName or password is incorrect please re-enter");
+                System.out.println("Enter your username: ");
+                userName = scnr.nextLine();  // Read user input
+                System.out.println("Password: ");
+                pass = scnr.nextLine();  // Read user input
+                if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
+                    home();
+                }
+                System.out.println("Bro your account still isn't found you wanna create a new one?[Y or N]: ");
+                newOne = scnr.nextLine();  // Read user input
+
+            }
+            while(newOne.equals("N"));
+            
 
 
             //log in
