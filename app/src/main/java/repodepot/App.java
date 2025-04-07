@@ -153,12 +153,12 @@ public class App {
             MongoCollection<Document> collection = database.getCollection("users");
             Document doc = collection.find(eq("username", name)).first();
             if (doc == null){
-                return new String[0];
+                return null;
             }
             else{
                 String[] user = new String[2];
-                user[0] = doc.get("username");
-                user[1] = doc.get("password");
+                user[0] = doc.get("username")+"";
+                user[1] = doc.get("password")+"";
                 return user;
             }
         }
