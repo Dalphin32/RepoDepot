@@ -46,18 +46,37 @@ public class App {
             String userName = scnr.nextLine();  // Read user input
             System.out.println("Password: ");
             String pass = scnr.nextLine();  // Read user input
-            boolean loggedIn = false;
-            if(!(alreadyUsed(userName) && getUser(userName)[1].equals(pass))){
-                int x = 0;
-                while(x<2){
-                    System.out.println("UserName or password is incorrect please re-enter");
-                    System.out.println("Enter your username: ");
-                    userName = scnr.nextLine();  // Read user input
-                    System.out.println("Password: ");
-                    pass = scnr.nextLine();  // Read user input
-                    if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
-                        loggedIn = true;
-                        break;
+            if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
+                home();
+            }
+            int x = 0;
+            while(x<3){
+                System.out.println("UserName or password is incorrect please re-enter");
+                System.out.println("Enter your username: ");
+                userName = scnr.nextLine();  // Read user input
+                System.out.println("Password: ");
+                pass = scnr.nextLine();  // Read user input
+                if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
+                System.out.println("UserName or password");
+            }
+            //FIND THE PASSWORD FOR THIS USERNAME
+
+
+            System.out.println("Your account has still not been found, would you like to create a new one?[Y or N]: ");
+            String newOne = scnr.nextLine();  // Read user input
+            if(newOne.equals("Y")){
+                if(create()){
+                    home();
+                }
+                x++;
+            }
+            //FIND THE PASSWORD FOR THIS USERNAME
+            System.out.println("Bro your account still isn't found you wanna create a new one?[Y or N]: ");
+            String newOne = scnr.nextLine();  // Read user input
+            do{
+                if(newOne.equals("Y")){
+                    if(create()){
+                        home();
                     }
                     x++;
                 }
@@ -219,7 +238,16 @@ public class App {
 
         switch(opt){
             case "1":
-                //send message
+                System.out.println("What user would you like to message?");
+                String selected_user = scnr.nextLine();
+                if (getUser(selected_user) == null){
+                    System.out.println("user does not exist!");
+                } else{
+                    System.out.println("Enter message:");
+                    String msg_body = scnr.nextLine();
+                    sendMessage(selected_user,msg_body);
+                    System.out.println("Message Sent!");
+                }
             break;
             case "2":
                 System.out.println("looking for users");
@@ -234,6 +262,7 @@ public class App {
                 //update profile
             break;
         }
+        home();
     }
 
     public static void sendMessage(String body, String user){
@@ -241,9 +270,15 @@ public class App {
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("messages");
-            /*try{
-                
-            }*/
+            try{
+                InsertOneResult message = collection.insertOne(new Document()
+                .append("text",body)
+                .append("user",user)
+                );
+            }
+            catch (MongoException me) {
+                System.err.println("Unable to insert due to an error: " + me);
+            }
         }
     }
 
