@@ -46,57 +46,47 @@ public class App {
             String userName = scnr.nextLine();  // Read user input
             System.out.println("Password: ");
             String pass = scnr.nextLine();  // Read user input
-            if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
-                home();
-            }
-            int x = 0;
-            while(x<3){
-<<<<<<< Updated upstream
-                System.out.println("UserName or password is incorrect please re-enter");
-                System.out.println("Enter your username: ");
-                userName = scnr.nextLine();  // Read user input
-                System.out.println("Password: ");
-                pass = scnr.nextLine();  // Read user input
-                if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
-=======
-                System.out.println("UserName or password");
-            }
-            //FIND THE PASSWORD FOR THIS USERNAME
-
-
-            System.out.println("Your account has still not been found, would you like to create a new one?[Y or N]: ");
-            String newOne = scnr.nextLine();  // Read user input
-            if(newOne.equals("Y")){
-                if(create()){
->>>>>>> Stashed changes
-                    home();
-                }
-                x++;
-            }
-            //FIND THE PASSWORD FOR THIS USERNAME
-            System.out.println("Bro your account still isn't found you wanna create a new one?[Y or N]: ");
-            String newOne = scnr.nextLine();  // Read user input
-            do{
-                if(newOne.equals("Y")){
-                    if(create()){
-                        home();
+            boolean loggedIn = false;
+            if(!(alreadyUsed(userName) && getUser(userName)[1].equals(pass))){
+                int x = 0;
+                while(x<2){
+                    System.out.println("UserName or password is incorrect please re-enter");
+                    System.out.println("Enter your username: ");
+                    userName = scnr.nextLine();  // Read user input
+                    System.out.println("Password: ");
+                    pass = scnr.nextLine();  // Read user input
+                    if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
+                        loggedIn = true;
+                        break;
                     }
+                    x++;
                 }
-                System.out.println("UserName or password is incorrect please re-enter");
-                System.out.println("Enter your username: ");
-                userName = scnr.nextLine();  // Read user input
-                System.out.println("Password: ");
-                pass = scnr.nextLine();  // Read user input
-                if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
-                    home();
-                }
-                System.out.println("Bro your account still isn't found you wanna create a new one?[Y or N]: ");
-                newOne = scnr.nextLine();  // Read user input
+                if(!loggedIn){
+                    String newOne = "N";  // Read user input
+                    while(newOne.equals("N")){
+                        System.out.println("UserName or password is incorrect please re-enter");
+                        System.out.println("Enter your username: ");
+                        userName = scnr.nextLine();  // Read user input
+                        System.out.println("Password: ");
+                        pass = scnr.nextLine();  // Read user input
+                        if(alreadyUsed(userName) && getUser(userName)[1].equals(pass)){
+                            break;
+                        }
+                        System.out.println("Bro your account still isn't found you wanna create a new one?[Y or N]: ");
+                        newOne = scnr.nextLine();  // Read user input
+                        if(newOne.equals("Y")){
+                            if(create()){
+                                break;
+                            }
+                        }
 
+                    }
+
+                }
             }
-            while(newOne.equals("N"));
             
-
+            
+            home();
 
             //log in
         } else if (log_or_sign.equals("2")){
@@ -106,7 +96,7 @@ public class App {
                 home();
             }
         }
-        scnr.close();
+        //scnr.close();
     }
 
 
@@ -155,7 +145,7 @@ public class App {
 
             System.out.println("Please enter youre name: ");
             String name = scnr.nextLine();  // Read user input
-        scnr.close();
+        //scnr.close();
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
@@ -186,14 +176,14 @@ public class App {
         try (MongoClient mongoClient = MongoClients.create(uri)){
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("users");
-            Document doc = collection.find(eq("username", name)).first();
+            Document doc = collection.find(eq("UserName", name)).first();
             if (doc == null){
                 return null;
             }
             else{
                 String[] user = new String[2];
-                user[0] = doc.get("username")+"";
-                user[1] = doc.get("password")+"";
+                user[0] = doc.get("UserName")+"";
+                user[1] = doc.get("Password")+"";
                 return user;
             }
         }
@@ -232,7 +222,7 @@ public class App {
                 //send message
             break;
             case "2":
-                //see users
+                System.out.println("looking for users");
             break;
             case "3":
                 //rooms
@@ -247,12 +237,13 @@ public class App {
     }
 
     public static void sendMessage(String body, String user){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("messages");
-            try{
+            /*try{
                 
-            }
+            }*/
         }
     }
 
