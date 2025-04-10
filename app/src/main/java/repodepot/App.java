@@ -232,7 +232,11 @@ public class App {
                 }
             break;
             case "2":
-                System.out.println("looking for users");
+                System.out.println("Users:");
+                String[] users = usersInServer();
+                for(int x= 1; x<users.length; x++){
+                    System.out.println(x+":"+users[x]);
+                }
             break;
             case "3":
                 //rooms
@@ -245,6 +249,36 @@ public class App {
             break;
         }
         home();
+    }
+
+    public static String[] usersInServer(){
+        String[] users = new String[14];  
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("users");
+            try{
+                Bson projectionFields = Projections.fields(
+                    Projections.include("UserName"),
+                    Projections.excludeId());
+                MongoCursor<Document> docs = collection.find().projection(projectionFields).iterator();
+                for(int x = 1; x<users.length;x++){
+                    try {
+                        while(docs.hasNext()) {
+                            users[x] = (docs.next().get("UserName")+"");
+                            x++;
+                        }
+                     } finally {
+                        docs.close();
+                        x = users.length;
+                    }
+                }             
+            }
+            catch (MongoException me) {
+                System.err.println("Unable to insert due to an error: " + me);
+            }
+        }
+        return users; 
     }
 
     public static void sendMessage(String body, String user){
