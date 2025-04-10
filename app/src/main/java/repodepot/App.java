@@ -235,7 +235,17 @@ public class App {
                 System.out.println("looking for users");
             break;
             case "3":
-                //rooms
+                System.out.println("Here are all the rooms");
+                showRooms();
+                System.out.println("Do you want to add a room? (y or n)");
+                String seeroom = scnr.next();
+                if(seeroom.equals("y")){
+                    System.out.println("What is the room name?");
+                    String name = scnr.next();
+                    System.out.println("What is the room description?");
+                    
+                    createRoom()
+                }
             break;
             case "4":
                 //check messages
@@ -272,10 +282,13 @@ public class App {
             try {
                 // Inserts a sample document describing a movie into the collection
                 InsertOneResult result = collection.insertOne(new Document()
-                        .append("name: ", roomName)
-                        .append("decription: ", description));
+                        .append("_id", new ObjectId())
+                        .append("name:", roomName)
+                        .append("decription:", description));
                 // Prints the name of the inserted document
-                //System.out.println("Success! you created the " + roomName + " room." );
+                System.out.println("Success! you created the " + roomName + " room." );
+                System.out.println("Name: " + roomName);
+                System.out.println("Description: " + description);
                 home();
             
             // Prints a message if any exceptions occur during the operation
@@ -286,6 +299,24 @@ public class App {
         /*if(createRoom(roomName, description)){
             home();
         }*/
+    }
+    
+    public static void showRooms(){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("rooms");
+            MongoCursor<Document> cursor = collection.find()
+                .sort(Sorts.descending("name:")).iterator();
+            try {
+                while(cursor.hasNext()){
+                    System.out.println(cursor.next().getString("name:"));
+                }
+            } catch (MongoException me) {
+                System.err.println("Unable to read due to an error: " + me);
+            }
+        }
+        
     }
 }
 
