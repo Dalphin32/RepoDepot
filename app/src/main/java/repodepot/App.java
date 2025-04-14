@@ -247,8 +247,9 @@ public class App {
                     System.out.println("What is the room name?");
                     String name = scnr.next();
                     System.out.println("What is the room description?");
-                    
-                    createRoom()
+                    scnr.nextLine();
+                    String desc = scnr.nextLine();
+                    createRoom(name, desc);
                 }
             break;
             case "4":
@@ -348,6 +349,8 @@ public class App {
                 }
             } catch (MongoException me) {
                 System.err.println("Unable to read due to an error: " + me);
+            }finally {
+                cursor.close();
             }
         }
         
