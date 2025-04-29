@@ -3,6 +3,8 @@
  */
 package repodepot;
 
+import java.util.ArrayList;
+import static com.mongodb.client.model.Filters.lt;
 import java.util.Scanner;
 import java.util.Arrays;
 import org.bson.Document;
@@ -251,7 +253,23 @@ public class App {
                     System.out.println("What is the room description?");
                     scnr.nextLine();
                     String desc = scnr.nextLine();
-                    createRoom(name, desc);
+                    createRoom(name, desc, get_current_user());
+                }else{
+                    System.out.println("Do you want to see a room? (y or n)");
+                    String see = scnr.next();
+                    if(see.equals("y")){
+                        System.out.println("Whos room do you want to see? (please enter user name)");
+                        String user = scnr.next();
+                        showRoom(user);
+                    }else{
+                        System.out.println("Do you want to join a room? (y or n)");
+                        String join = scnr.next();
+                        if(join.equals("y")){
+                            System.out.println("What Room do you want to join?");
+                            String room = scnr.next();
+                            joinRoom(room);
+                        }
+                    }
                 }
             break;
             case "4":
@@ -336,7 +354,7 @@ public class App {
         }
     }
 
-    public static void createRoom(String roomName, String description){
+    public static void createRoom(String roomName, String description, String user){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
@@ -345,10 +363,13 @@ public class App {
                 // Inserts a sample document describing a movie into the collection
                 InsertOneResult result = collection.insertOne(new Document()
                         .append("_id", new ObjectId())
+                        .append("user:", user)
+                        .append("userList:", new ArrayList<String>())
                         .append("name:", roomName)
                         .append("decription:", description));
                 // Prints the name of the inserted document
                 System.out.println("Success! you created the " + roomName + " room." );
+                System.out.println("User: " + user);
                 System.out.println("Name: " + roomName);
                 System.out.println("Description: " + description);
                 home();
@@ -358,9 +379,6 @@ public class App {
                 System.err.println("Unable to insert due to an error: " + me);
             }
         }
-        /*if(createRoom(roomName, description)){
-            home();
-        }*/
     }
     
     public static void showRooms(){
@@ -381,6 +399,56 @@ public class App {
             }
         }
         
+    }
+
+    public static void showRoom(String user){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("rooms");
+            MongoCursor<Document> cursor = collection.find()
+                .sort(Sorts.descending("user:")).iterator();
+            try {
+                Bson projectionFields = Projections.fields(
+                    Projections.include("user", "name", "people"),
+                    Projections.excludeId());
+                Document doc = collection.find(lt("user", user))
+                    .projection(projectionFields)
+                    .first();
+                if (doc == null) {
+                    System.out.println("No results found.");
+                }else {
+                    System.out.println("Room name: " + doc.get("name"));
+                    System.out.println("User: " + doc.get("user"));
+                    System.out.println("People in Room: " + doc.get("people"));
+                }
+            } catch (MongoException me) {
+                System.err.println("Unable to read due to an error: " + me);
+            }finally {
+                cursor.close();
+            }
+        }
+    }
+
+    public static void joinRoom(String room){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("rooms");
+            try {
+                // Inserts a sample document describing a movie into the collection
+                Document doc = collection.find(lt("name:", room))
+                    .sort(Sorts.ascending("name:"))
+                    .first();
+
+                
+                doc.get("userList:").add(get_current_user());
+            
+            // Prints a message if any exceptions occur during the operation
+            } catch (MongoException me) {
+                System.err.println("Unable to join due to an error: " + me);
+            }
+        }
     }
 
     public static void set_current_user(String user){
