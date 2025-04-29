@@ -28,7 +28,12 @@ public class App {
     private static String current_user;
 
     public static void main(String[] args) {
-                Scanner scnr = new Scanner(System.in);
+        start();
+    }
+
+
+    static void start(){
+        Scanner scnr = new Scanner(System.in);
 
         System.out.println("________________________________________________________________");
         System.out.println("    /'\\      /'''''\\   /'''''\\   /'''''\\   |'''''''\\   |'''''\\  ");
@@ -40,6 +45,7 @@ public class App {
         System.out.println("");
         System.out.println("[1] Login");
         System.out.println("[2] Sign up");
+        System.out.println("[3] Shut down");
         String log_or_sign = scnr.nextLine();
         if (log_or_sign.equals("1")){
             System.out.println("Welcome!! Lets get you logged in!!");
@@ -96,12 +102,10 @@ public class App {
                 System.out.println("Your account was successfully created!!");
                 home();
             }
+        } else{
+            System.exit(0);
         }
-        //scnr.close();
     }
-
-
-
 
 
 
@@ -173,6 +177,12 @@ public class App {
         
     }
 
+    static void logout(){
+        System.out.println("Goodbye! :)");
+        set_current_user(null);
+        start();
+    }
+
     static String[] getUser(String name){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)){
@@ -211,12 +221,13 @@ public class App {
     public static void home(){
         Scanner scnr = new Scanner(System.in);
 
-        System.out.println("Welcome [USERNAME]");
+        System.out.println("Welcome "+get_current_user()+"!");
         System.out.println("[1] Send Message");
         System.out.println("[2] See Users");
         System.out.println("[3] Rooms");
         System.out.println("[4] Check Messages");
         System.out.println("[5] Update Profile");
+        System.out.println("[6] Log out");
         String opt = scnr.nextLine();
 
         switch(opt){
@@ -271,6 +282,9 @@ public class App {
             break;
             case "5":
                 //update profile
+            break;
+            case "6":
+                logout();
             break;
         }
         home();
@@ -346,6 +360,7 @@ public class App {
                 InsertOneResult message = collection.insertOne(new Document()
                 .append("text",body)
                 .append("user",user)
+                .append("sent_by",get_current_user())
                 );
             }
             catch (MongoException me) {
@@ -365,7 +380,9 @@ public class App {
             try {
                 System.out.println("________________________________________________________________________________");
                 while(cursor.hasNext()) {
-                    System.out.println(cursor.next().get("text"));
+                    Document next = cursor.next();
+                    System.out.print(next.get("sent_by")+": ");
+                    System.out.println(next.get("text"));
                     System.out.println("________________________________________________________________________________");
                 }
             } finally {
