@@ -236,8 +236,20 @@ public class App {
             case "2":
                 System.out.println("Users:");
                 String[] users = usersInServer();
-                for(int x= 1; x<users.length; x++){
-                    System.out.println(x+":"+users[x]);
+                for(int x= 1; x<=users.length; x++){
+                    if (x<users.length){
+                        System.out.println(x+": "+users[x]);
+                    }else{
+                        System.out.println(x+": Go Back");  
+                    }
+                }
+                System.out.println("Enter the number of the user or action you would like to do: ");
+                int action = scnr.nextInt();
+                if(action >= users.length){
+                    home();
+                }else{
+                    //System.out.println(users[1]);
+                    seeProfile(users[action]);
                 }
             break;
             case "3":
@@ -264,6 +276,28 @@ public class App {
         home();
     }
 
+    public static void seeProfile(String userName){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("users");
+            Bson projectionFields = Projections.fields(
+                    Projections.include("UserName"),
+                    Projections.include("Bio"),
+                    Projections.include("Name"),
+                    Projections.excludeId());
+            Document doc = collection.find(eq("UserName", userName)).projection(projectionFields).first();
+
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            System.out.println(doc.get("UserName") +" -- "+ doc.get("Name"));
+            System.out.println("Bio: " + doc.get("Bio"));
+            System.out.println();
+            System.out.println();
+            System.out.println();
+        }
+    }
     public static String[] usersInServer(){ 
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
@@ -271,7 +305,7 @@ public class App {
             MongoCollection<Document> collection = database.getCollection("users");
             long longLength = collection.countDocuments();
             int length = (int) longLength;
-            String[] users = new String[length+1]; 
+            String[] users = new String[length]; 
             try{
                 Bson projectionFields = Projections.fields(
                     Projections.include("UserName"),
@@ -282,7 +316,12 @@ public class App {
                 for(int x = 1; x<users.length;x++){
                     try {
                         if(docs.hasNext()) {
-                            users[x] = (docs.next().get("UserName")+"");
+                            String name = (docs.next().get("UserName")+"");
+                            if(!name.equals(get_current_user())){
+                                users[x] = (name);
+                            }else{
+                                x--;
+                            }
                         }
                      } finally {
                         docs.close();
