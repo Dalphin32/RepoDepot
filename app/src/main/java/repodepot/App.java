@@ -25,6 +25,7 @@ import com.mongodb.client.model.Updates;
 import org.bson.conversions.Bson;
 
 public class App {
+    private static String current_user;
 
     public static void main(String[] args) {
                 Scanner scnr = new Scanner(System.in);
@@ -85,7 +86,7 @@ public class App {
                 }
             }
             
-            
+            set_current_user(userName);
             home();
 
             //log in
@@ -161,6 +162,7 @@ public class App {
                         .append("Name", name));
                 // Prints the ID of the inserted document
                 //redirect to home
+                set_current_user(userName);
                 return true;
             
             // Prints a message if any exceptions occur during the operation
@@ -253,7 +255,7 @@ public class App {
                 }
             break;
             case "4":
-                //check messages
+                read_messages(get_current_user());
             break;
             case "5":
                 //update profile
@@ -312,6 +314,27 @@ public class App {
             }
         }
     }
+    public static void read_messages(String user){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("messages");
+            Bson projectionFields = Projections.fields(Projections.excludeId());
+            MongoCursor<Document> cursor = collection.find(eq("user",user))
+                    .projection(projectionFields)
+                    .sort(Sorts.descending("id")).iterator();
+            try {
+                System.out.println("________________________________________________________________________________");
+                while(cursor.hasNext()) {
+                    System.out.println(cursor.next().get("text"));
+                    System.out.println("________________________________________________________________________________");
+                }
+            } finally {
+                cursor.close();
+                home();
+            }
+        }
+    }
 
     public static void createRoom(String roomName, String description){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
@@ -358,6 +381,13 @@ public class App {
             }
         }
         
+    }
+
+    public static void set_current_user(String user){
+        current_user = user;
+    }
+    public static String get_current_user(){
+        return current_user;
     }
 }
 
