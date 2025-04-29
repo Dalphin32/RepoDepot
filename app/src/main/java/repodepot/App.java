@@ -30,7 +30,12 @@ public class App {
     private static String current_user;
 
     public static void main(String[] args) {
-                Scanner scnr = new Scanner(System.in);
+        start();
+    }
+
+
+    static void start(){
+        Scanner scnr = new Scanner(System.in);
 
         System.out.println("________________________________________________________________");
         System.out.println("    /'\\      /'''''\\   /'''''\\   /'''''\\   |'''''''\\   |'''''\\  ");
@@ -42,6 +47,7 @@ public class App {
         System.out.println("");
         System.out.println("[1] Login");
         System.out.println("[2] Sign up");
+        System.out.println("[3] Shut down");
         String log_or_sign = scnr.nextLine();
         if (log_or_sign.equals("1")){
             System.out.println("Welcome!! Lets get you logged in!!");
@@ -98,12 +104,10 @@ public class App {
                 System.out.println("Your account was successfully created!!");
                 home();
             }
+        } else{
+            System.exit(0);
         }
-        //scnr.close();
     }
-
-
-
 
 
 
@@ -175,6 +179,12 @@ public class App {
         
     }
 
+    static void logout(){
+        System.out.println("Goodbye! :)");
+        set_current_user(null);
+        start();
+    }
+
     static String[] getUser(String name){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)){
@@ -213,12 +223,13 @@ public class App {
     public static void home(){
         Scanner scnr = new Scanner(System.in);
 
-        System.out.println("Welcome [USERNAME]");
+        System.out.println("Welcome "+get_current_user()+"!");
         System.out.println("[1] Send Message");
         System.out.println("[2] See Users");
         System.out.println("[3] Rooms");
         System.out.println("[4] Check Messages");
         System.out.println("[5] Update Profile");
+        System.out.println("[6] Log out");
         String opt = scnr.nextLine();
 
         switch(opt){
@@ -238,8 +249,20 @@ public class App {
             case "2":
                 System.out.println("Users:");
                 String[] users = usersInServer();
-                for(int x= 1; x<users.length; x++){
-                    System.out.println(x+":"+users[x]);
+                for(int x= 1; x<=users.length; x++){
+                    if (x<users.length){
+                        System.out.println(x+": "+users[x]);
+                    }else{
+                        System.out.println(x+": Go Back");  
+                    }
+                }
+                System.out.println("Enter the number of the user or action you would like to do: ");
+                int action = scnr.nextInt();
+                if(action >= users.length){
+                    home();
+                }else{
+                    //System.out.println(users[1]);
+                    seeProfile(users[action]);
                 }
             break;
             case "3":
@@ -278,10 +301,35 @@ public class App {
             case "5":
                 //update profile
             break;
+            case "6":
+                logout();
+            break;
         }
         home();
     }
 
+    public static void seeProfile(String userName){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("users");
+            Bson projectionFields = Projections.fields(
+                    Projections.include("UserName"),
+                    Projections.include("Bio"),
+                    Projections.include("Name"),
+                    Projections.excludeId());
+            Document doc = collection.find(eq("UserName", userName)).projection(projectionFields).first();
+
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            System.out.println(doc.get("UserName") +" -- "+ doc.get("Name"));
+            System.out.println("Bio: " + doc.get("Bio"));
+            System.out.println();
+            System.out.println();
+            System.out.println();
+        }
+    }
     public static String[] usersInServer(){ 
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
@@ -289,7 +337,7 @@ public class App {
             MongoCollection<Document> collection = database.getCollection("users");
             long longLength = collection.countDocuments();
             int length = (int) longLength;
-            String[] users = new String[length+1]; 
+            String[] users = new String[length]; 
             try{
                 Bson projectionFields = Projections.fields(
                     Projections.include("UserName"),
@@ -300,7 +348,12 @@ public class App {
                 for(int x = 1; x<users.length;x++){
                     try {
                         if(docs.hasNext()) {
-                            users[x] = (docs.next().get("UserName")+"");
+                            String name = (docs.next().get("UserName")+"");
+                            if(!name.equals(get_current_user())){
+                                users[x] = (name);
+                            }else{
+                                x--;
+                            }
                         }
                      } finally {
                         docs.close();
@@ -325,6 +378,7 @@ public class App {
                 InsertOneResult message = collection.insertOne(new Document()
                 .append("text",body)
                 .append("user",user)
+                .append("sent_by",get_current_user())
                 );
             }
             catch (MongoException me) {
@@ -344,7 +398,9 @@ public class App {
             try {
                 System.out.println("________________________________________________________________________________");
                 while(cursor.hasNext()) {
-                    System.out.println(cursor.next().get("text"));
+                    Document next = cursor.next();
+                    System.out.print(next.get("sent_by")+": ");
+                    System.out.println(next.get("text"));
                     System.out.println("________________________________________________________________________________");
                 }
             } finally {
