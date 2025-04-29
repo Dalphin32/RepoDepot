@@ -278,34 +278,38 @@ public class App {
         home();
     }
 
-    public static String[] usersInServer(){
-        String[] users = new String[14];  
+    public static String[] usersInServer(){ 
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("users");
+            long longLength = collection.countDocuments();
+            int length = (int) longLength;
+            String[] users = new String[length+1]; 
             try{
                 Bson projectionFields = Projections.fields(
                     Projections.include("UserName"),
                     Projections.excludeId());
+                Document doc = collection.find().projection(projectionFields).first();
+                users[0] = doc +"";
                 MongoCursor<Document> docs = collection.find().projection(projectionFields).iterator();
                 for(int x = 1; x<users.length;x++){
                     try {
-                        while(docs.hasNext()) {
+                        if(docs.hasNext()) {
                             users[x] = (docs.next().get("UserName")+"");
-                            x++;
                         }
                      } finally {
                         docs.close();
-                        x = users.length;
+                        //x = users.length;
                     }
-                }             
+                } 
+                return users;             
             }
             catch (MongoException me) {
                 System.err.println("Unable to insert due to an error: " + me);
             }
         }
-        return users; 
+        return null; 
     }
 
     public static void sendMessage(String body, String user){
