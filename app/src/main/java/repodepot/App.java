@@ -527,6 +527,11 @@ public class App {
             MongoCollection<Document> collection = database.getCollection("rooms");
             try {
                 //im going to add them to a list of people depending on the room
+                Document doc = collection.find(eq("name", room))
+                    .projection(projectionFields)
+                    .first();
+
+                
                 home();
             
             // Prints a message if any exceptions occur during the operation
