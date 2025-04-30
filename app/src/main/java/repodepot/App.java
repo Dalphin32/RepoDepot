@@ -3,28 +3,23 @@
  */
 package repodepot;
 
-import java.util.ArrayList;
-import static com.mongodb.client.model.Filters.lt;
 import java.util.Scanner;
-import java.util.Arrays;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+
 import com.mongodb.MongoException;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Projections;
-import com.mongodb.client.result.InsertOneResult;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.lt;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.Updates;
-
-import org.bson.conversions.Bson;
+import com.mongodb.client.result.InsertOneResult;
 
 public class App {
     private static String current_user;
@@ -290,7 +285,7 @@ public class App {
                         if(join.equals("y")){
                             System.out.println("What Room do you want to join?");
                             String room = scnr.next();
-                            joinRoom(room);
+                            //addUser(room);
                         }
                     }
                 }
@@ -419,10 +414,10 @@ public class App {
                 // Inserts a sample document describing a movie into the collection
                 InsertOneResult result = collection.insertOne(new Document()
                         .append("_id", new ObjectId())
-                        .append("user:", user)
-                        .append("userList:", new ArrayList<String>())
-                        .append("name:", roomName)
-                        .append("decription:", description));
+                        .append("user", user)
+                        //.append("userList", new ArrayList<String>())
+                        .append("name", roomName)
+                        .append("decription", description));
                 // Prints the name of the inserted document
                 System.out.println("Success! you created the " + roomName + " room." );
                 System.out.println("User: " + user);
@@ -486,19 +481,15 @@ public class App {
         }
     }
 
-    public static void joinRoom(String room){
+    public static void addUser(String user){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("rooms");
             try {
                 // Inserts a sample document describing a movie into the collection
-                Document doc = collection.find(lt("name:", room))
-                    .sort(Sorts.ascending("name:"))
+                Document doc = collection.find(lt("user:", user))
                     .first();
-
-                
-                doc.get("userList:").add(get_current_user());
             
             // Prints a message if any exceptions occur during the operation
             } catch (MongoException me) {
