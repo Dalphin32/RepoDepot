@@ -3,6 +3,8 @@
  */
 package repodepot;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Scanner;
 
 import org.bson.Document;
@@ -16,7 +18,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.lt;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.InsertOneResult;
@@ -230,17 +231,31 @@ public class App {
 
         switch(opt){
             case "1":
-                System.out.println("What user would you like to message?");
-                String selected_user = scnr.nextLine();
-                if (getUser(selected_user) == null){
-                    System.out.println("user does not exist!");
-                } else{
-                    System.out.println("Enter message:");
-                    String msg_body = scnr.nextLine();
-                    scnr.nextLine();
-                    sendMessage(msg_body,selected_user);
-                    System.out.println("Message Sent!");
+                String[] l_users = usersInServer();
+                for(int x= 1; x<=l_users.length; x++){
+                    if (x<l_users.length){
+                        System.out.println(x+": "+l_users[x]);
+                    }else{
+                        System.out.println(x+": Go Back");  
+                    }
                 }
+                System.out.println("What user would you like to message?");
+                int selected_user = scnr.nextInt();
+                scnr.nextLine();
+
+                if(selected_user >= l_users.length){
+                    System.out.println("user does not exist!");
+                }else{
+                        System.out.println("Enter message:");
+                        System.out.println("[b] back");
+                        String msg_body = scnr.nextLine();
+                        if (msg_body != "b"){
+                        sendMessage(msg_body,l_users[selected_user],false);
+                        System.out.println("Message Sent!");
+                        }
+                }
+
+
             break;
             case "2":
                 System.out.println("Users:");
@@ -309,7 +324,9 @@ public class App {
                 }
             break;
             case "4":
-                read_messages(get_current_user());
+                read_messages(get_current_user(), false);
+                System.out.println("press enter to continue");
+                scnr.nextLine();
             break;
             case "5":
                 //update profile
@@ -382,7 +399,8 @@ public class App {
         return null; 
     }
 
-    public static void sendMessage(String body, String user){
+    public static void sendMessage(String body, String user, boolean is_room){
+        if (is_room) user = "r_" + user;
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
@@ -391,6 +409,7 @@ public class App {
                 InsertOneResult message = collection.insertOne(new Document()
                 .append("text",body)
                 .append("user",user)
+                .append("time", new Date())
                 .append("sent_by",get_current_user())
                 );
             }
@@ -399,7 +418,8 @@ public class App {
             }
         }
     }
-    public static void read_messages(String user){
+    public static void read_messages(String user, boolean is_room){
+        if (is_room) user = "r_" + user;
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
@@ -412,13 +432,14 @@ public class App {
                 System.out.println("________________________________________________________________________________");
                 while(cursor.hasNext()) {
                     Document next = cursor.next();
+                    //Date tim = next.get("time");
+                    //System.out.println(tim.getHours()+":"+tim.getMinutes());
                     System.out.print(next.get("sent_by")+": ");
                     System.out.println(next.get("text"));
                     System.out.println("________________________________________________________________________________");
                 }
             } finally {
                 cursor.close();
-                home();
             }
         }
     }
@@ -457,7 +478,7 @@ public class App {
             MongoCollection<Document> collection = database.getCollection("rooms");
             long longLength = collection.countDocuments();
             int length = (int) longLength;
-            String[] rooms = new String[length]; 
+            String[] rooms = new String[length+1]; 
             /*MongoCursor<Document> cursor = collection.find()
                 .sort(Sorts.descending("name:")).iterator();*/
             try {
@@ -497,20 +518,30 @@ public class App {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("rooms");
             MongoCursor<Document> cursor = collection.find()
-                .sort(Sorts.descending("user:")).iterator();
+                .sort(Sorts.descending("user")).iterator();
             try {
                 Bson projectionFields = Projections.fields(
                     Projections.include("user", "name", "people"),
                     Projections.excludeId());
-                Document doc = collection.find(lt("user", user))
-                    .projection(projectionFields)
-                    .first();
-                if (doc == null) {
+                    MongoCursor<Document> docs = collection.find(eq("user", user))
+                    .projection(projectionFields).iterator();
+                if (docs == null) {
                     System.out.println("No results found.");
                 }else {
+                    int numDocs =(int) collection.countDocuments(eq("user", user));
+                    Document doc = collection.find(eq("user", user)).projection(projectionFields).first();
+                    if(doc == null){
+                        System.out.println("This user has no rooms!");
+                        return;
+                    }
                     System.out.println("Room name: " + doc.get("name"));
                     System.out.println("User: " + doc.get("user"));
                     System.out.println("People in Room: " + doc.get("people"));
+                    while(docs.hasNext() && numDocs !=1){
+                        System.out.println("Room name: " + docs.next().get("name"));
+                        System.out.println("User: " + docs.next().get("user"));
+                        System.out.println("People in Room: " + docs.next().get("people"));
+                    }
                 }
             } catch (MongoException me) {
                 System.err.println("Unable to read due to an error: " + me);
@@ -527,9 +558,9 @@ public class App {
             MongoCollection<Document> collection = database.getCollection("rooms");
             try {
                 //im going to add them to a list of people depending on the room
-                Document doc = collection.find(eq("name", room))
-                    .projection(projectionFields)
-                    .first();
+                // Document doc = collection.find(eq("name", room))
+                //     .projection(projectionFields)
+                //     .first();
 
                 
                 home();
