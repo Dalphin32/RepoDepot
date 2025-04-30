@@ -463,7 +463,7 @@ public class App {
             MongoCollection<Document> collection = database.getCollection("rooms");
             long longLength = collection.countDocuments();
             int length = (int) longLength;
-            String[] rooms = new String[length]; 
+            String[] rooms = new String[length+1]; 
             /*MongoCursor<Document> cursor = collection.find()
                 .sort(Sorts.descending("name:")).iterator();*/
             try {
@@ -503,20 +503,30 @@ public class App {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("rooms");
             MongoCursor<Document> cursor = collection.find()
-                .sort(Sorts.descending("user:")).iterator();
+                .sort(Sorts.descending("user")).iterator();
             try {
                 Bson projectionFields = Projections.fields(
                     Projections.include("user", "name", "people"),
                     Projections.excludeId());
-                Document doc = collection.find(lt("user", user))
-                    .projection(projectionFields)
-                    .first();
-                if (doc == null) {
+                    MongoCursor<Document> docs = collection.find(eq("user", user))
+                    .projection(projectionFields).iterator();
+                if (docs == null) {
                     System.out.println("No results found.");
                 }else {
+                    int numDocs =(int) collection.countDocuments(eq("user", user));
+                    Document doc = collection.find(eq("user", user)).projection(projectionFields).first();
+                    if(doc == null){
+                        System.out.println("This user has no rooms!");
+                        return;
+                    }
                     System.out.println("Room name: " + doc.get("name"));
                     System.out.println("User: " + doc.get("user"));
                     System.out.println("People in Room: " + doc.get("people"));
+                    while(docs.hasNext() && numDocs !=1){
+                        System.out.println("Room name: " + docs.next().get("name"));
+                        System.out.println("User: " + docs.next().get("user"));
+                        System.out.println("People in Room: " + docs.next().get("people"));
+                    }
                 }
             } catch (MongoException me) {
                 System.err.println("Unable to read due to an error: " + me);
