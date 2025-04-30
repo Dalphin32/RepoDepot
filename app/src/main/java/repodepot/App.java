@@ -216,6 +216,7 @@ public class App {
     }
 
     public static void home(){
+        String[] users = usersInServer();
         Scanner scnr = new Scanner(System.in);
 
         System.out.println("Welcome "+get_current_user()+"!");
@@ -243,7 +244,6 @@ public class App {
             break;
             case "2":
                 System.out.println("Users:");
-                String[] users = usersInServer();
                 for(int x= 1; x<=users.length; x++){
                     if (x<users.length){
                         System.out.println(x+": "+users[x]);
@@ -262,18 +262,32 @@ public class App {
             break;
             case "3":
                 System.out.println("Here are all the rooms");
-                showRooms();
-                System.out.println("Do you want to add a room? (y or n)");
-                String seeroom = scnr.next();
-                if(seeroom.equals("y")){
+                String []rooms = showRooms();
+                for(int x= 1; x<rooms.length; x++){
+                    System.out.println(x+": "+rooms[x]);
+                }
+                System.out.println("[1] Add A Room");
+                System.out.println("[2] See A Room");
+                System.out.println("[3] Join A Room");
+                System.out.println("[4] Delete A Room");
+                /*System.out.println("[5] Update Profile");
+                System.out.println("[6] Log out");*/
+                String seeroom = scnr.nextLine();
+                if(seeroom.equals("1")){
                     System.out.println("What is the room name?");
                     String name = scnr.next();
                     System.out.println("What is the room description?");
                     scnr.nextLine();
                     String desc = scnr.nextLine();
                     createRoom(name, desc, get_current_user());
-                }else{
-                    System.out.println("Do you want to see a room? (y or n)");
+                }else if (seeroom.equals("2")){
+                    for(int x= 1; x<users.length; x++){
+                        System.out.println(x+": "+users[x]);
+                    }
+                    System.out.println("Enter the number of the user who's rooms you would like to see: ");
+                    int choice = scnr.nextInt();
+                    showRoom(users[choice]);
+                    /*System.out.println("Do you want to see a room? (y or n)");
                     String see = scnr.next();
                     if(see.equals("y")){
                         System.out.println("Whos room do you want to see? (please enter user name)");
@@ -287,7 +301,11 @@ public class App {
                             String room = scnr.next();
                             //addUser(room);
                         }
-                    }
+                    }*/
+                }else if(seeroom.equals("3")){
+                    System.out.println("Enter the number of the room you want to join:");
+                    int roomNum = scnr.nextInt();
+                    joinRoom(rooms[roomNum]);
                 }
             break;
             case "4":
@@ -415,7 +433,7 @@ public class App {
                 InsertOneResult result = collection.insertOne(new Document()
                         .append("_id", new ObjectId())
                         .append("user", user)
-                        //.append("userList", new ArrayList<String>())
+                        .append("userList", new ArrayList<String>())
                         .append("name", roomName)
                         .append("decription", description));
                 // Prints the name of the inserted document
@@ -432,25 +450,46 @@ public class App {
         }
     }
     
-    public static void showRooms(){
+    public static String[] showRooms(){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("rooms");
-            MongoCursor<Document> cursor = collection.find()
-                .sort(Sorts.descending("name:")).iterator();
+            long longLength = collection.countDocuments();
+            int length = (int) longLength;
+            String[] rooms = new String[length]; 
+            /*MongoCursor<Document> cursor = collection.find()
+                .sort(Sorts.descending("name:")).iterator();*/
             try {
-                while(cursor.hasNext()){
-                    System.out.println(cursor.next().getString("name:"));
+                Bson projectionFields = Projections.fields(
+                    Projections.include("name"),
+                    Projections.excludeId());
+                Document doc = collection.find().projection(projectionFields).first();
+                rooms[0] = doc +"";
+                MongoCursor<Document> docs = collection.find().projection(projectionFields).iterator();
+                for(int x = 1; x<rooms.length;x++){
+                    try {
+                        if(docs.hasNext()) {
+                            String name = (docs.next().get("name")+"");
+                            rooms[x] = (name);
+                        }
+
+                         /*while(cursor.hasNext()){
+                             System.out.println(cursor.next().getString("name:"));
+                            }*/
+                    }finally{
+                        docs.close();
+                    }
+                
                 }
-            } catch (MongoException me) {
-                System.err.println("Unable to read due to an error: " + me);
-            }finally {
-                cursor.close();
+                return rooms; 
+            }catch (MongoException me) {
+                System.err.println("Unable to insert due to an error: " + me);
+            }
+            return null;
             }
         }
-        
-    }
+
 
     public static void showRoom(String user){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
@@ -481,19 +520,18 @@ public class App {
         }
     }
 
-    public static void addUser(String user){
+    public static void joinRoom(String room){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("rooms");
             try {
-                // Inserts a sample document describing a movie into the collection
-                Document doc = collection.find(lt("user:", user))
-                    .first();
+                //im going to add them to a list of people depending on the room
+                home();
             
             // Prints a message if any exceptions occur during the operation
             } catch (MongoException me) {
-                System.err.println("Unable to join due to an error: " + me);
+                System.err.println("Unable to insert due to an error: " + me);
             }
         }
     }
