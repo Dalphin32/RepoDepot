@@ -4,7 +4,8 @@
 package repodepot;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Scanner;
 
 import org.bson.Document;
@@ -231,10 +232,9 @@ public class App {
 
         switch(opt){
             case "1":
-                String[] l_users = usersInServer();
-                for(int x= 1; x<=l_users.length; x++){
-                    if (x<l_users.length){
-                        System.out.println(x+": "+l_users[x]);
+                for(int x= 1; x<=users.length; x++){
+                    if (x<users.length){
+                        System.out.println(x+": "+users[x]);
                     }else{
                         System.out.println(x+": Go Back");  
                     }
@@ -243,14 +243,14 @@ public class App {
                 int selected_user = scnr.nextInt();
                 scnr.nextLine();
 
-                if(selected_user >= l_users.length){
+                if(selected_user >= users.length){
                     System.out.println("user does not exist!");
                 }else{
                         System.out.println("Enter message:");
                         System.out.println("[b] back");
                         String msg_body = scnr.nextLine();
                         if (msg_body != "b"){
-                        sendMessage(msg_body,l_users[selected_user],false);
+                        sendMessage(msg_body,users[selected_user],false);
                         System.out.println("Message Sent!");
                         }
                 }
@@ -324,9 +324,25 @@ public class App {
                 }
             break;
             case "4":
-                read_messages(get_current_user(), false);
-                System.out.println("press enter to continue");
+                /*for(int x= 1; x<=users.length; x++){
+                    if (x<users.length){
+                        System.out.println(x+": "+users[x]);
+                    }else{
+                        System.out.println(x+": Go Back");  
+                    }
+                }
+                System.out.println("Please select a user:");
+                int selected_user = scnr.nextInt();
                 scnr.nextLine();
+
+                if(selected_user >= users.length){
+                    System.out.println("user does not exist!");
+                }else{*/
+                        read_messages(get_current_user(), false);
+                        System.out.println("press enter to continue");
+                        scnr.nextLine();
+                        //}
+                
             break;
             case "5":
                 //update profile
@@ -406,10 +422,11 @@ public class App {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("messages");
             try{
+                LocalDateTime tim = LocalDateTime.now();
                 InsertOneResult message = collection.insertOne(new Document()
                 .append("text",body)
                 .append("user",user)
-                .append("time", new Date())
+                .append("time", tim)
                 .append("sent_by",get_current_user())
                 );
             }
@@ -419,27 +436,41 @@ public class App {
         }
     }
     public static void read_messages(String user, boolean is_room){
-        if (is_room) user = "r_" + user;
+        //if (is_room) user = "r_" + user;
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("messages");
             Bson projectionFields = Projections.fields(Projections.excludeId());
-            MongoCursor<Document> cursor = collection.find(eq("user",user))
+            MongoCursor<Document> other_cursor = collection.find(eq("user",user))
+                    .projection(projectionFields)
+                    .sort(Sorts.descending("id")).iterator();
+            MongoCursor<Document> current_cursor = collection.find(eq("user",get_current_user()))
                     .projection(projectionFields)
                     .sort(Sorts.descending("id")).iterator();
             try {
+                /*if (other_cursor.hasNext()||current_cursor.hasNext()){
+                    Document other_next = other_cursor.next();
+                    Document current_next = current_cursor.next();
+
+                    if (other_next)
+                }*/
                 System.out.println("________________________________________________________________________________");
-                while(cursor.hasNext()) {
-                    Document next = cursor.next();
-                    //Date tim = next.get("time");
-                    //System.out.println(tim.getHours()+":"+tim.getMinutes());
-                    System.out.print(next.get("sent_by")+": ");
-                    System.out.println(next.get("text"));
+                while(current_cursor.hasNext()) { 
+                    Document current_next = current_cursor.next();
+
+                    String tim = current_next.get("time")+"";
+                    int hour = Integer.parseInt(tim.substring(11,13));
+                    hour+= 4;
+                    tim = ""+hour+tim.substring(13,16);
+
+                    System.out.println(tim);
+                    System.out.print(current_next.get("sent_by")+": ");
+                    System.out.println(current_next.get("text"));
                     System.out.println("________________________________________________________________________________");
                 }
             } finally {
-                cursor.close();
+                current_cursor.close();
             }
         }
     }
