@@ -18,6 +18,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import static com.mongodb.client.model.Filters.eq;
+
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.InsertOneResult;
@@ -259,32 +261,43 @@ public class App {
             break;
             case "2":
                 System.out.println("Users:");
-                for(int x= 1; x<=users.length; x++){
-                    if (x<users.length){
-                        System.out.println(x+": "+users[x]);
-                    }else{
-                        System.out.println(x+": Go Back");  
+                if(users!=null && users.length>0){
+                    for(int x= 1; x<=users.length; x++){
+                        if (x<users.length){
+                            System.out.println(x+": "+users[x]);
+                        }else{
+                            System.out.println(x+": Go Back");  
+                        }
                     }
-                }
-                System.out.println("Enter the number of the user or action you would like to do: ");
-                int action = scnr.nextInt();
-                if(action >= users.length){
-                    home();
+                    System.out.println("Enter the number of the user or action you would like to do: ");
+                    int action = scnr.nextInt();
+                    if(action >= users.length){
+                        home();
+                    }else{
+                        //System.out.println(users[1]);
+                        seeProfile(users[action]);
+                    }
                 }else{
-                    //System.out.println(users[1]);
-                    seeProfile(users[action]);
+                    System.out.println("No users in server");
                 }
             break;
             case "3":
                 System.out.println("Here are all the rooms");
                 String []rooms = showRooms();
-                for(int x= 1; x<rooms.length; x++){
-                    System.out.println(x+": "+rooms[x]);
+                if(rooms != null && rooms.length>0){
+                    for(int x= 1; x<rooms.length; x++){
+                        System.out.println(x+": "+rooms[x]);
+                    }
+                }else{
+                    System.out.println("There are no created rooms!");
                 }
                 System.out.println("[1] Add A Room");
                 System.out.println("[2] See A Room");
                 System.out.println("[3] Join A Room");
-                System.out.println("[4] Delete A Room");
+                if(userRooms(rooms, get_current_user())!=null){
+                    System.out.println("[4] Delete A Room");
+                    System.out.println("[5] See Your Rooms");
+                }
                 /*System.out.println("[5] Update Profile");
                 System.out.println("[6] Log out");*/
                 String seeroom = scnr.nextLine();
@@ -321,6 +334,30 @@ public class App {
                     System.out.println("Enter the number of the room you want to join:");
                     int roomNum = scnr.nextInt();
                     joinRoom(rooms[roomNum]);
+                }else if(seeroom.equals("4")){
+                    String[] yourRooms = userRooms(rooms, get_current_user());
+                    if(yourRooms == null){
+                        System.out.println("You have no rooms to delete");
+                    }else{
+                        System.out.println("Here are the rooms you can delete");
+                        for(int x= 0; x<yourRooms.length; x++){
+                            System.out.println(x+1+": "+yourRooms[x]);
+                        }
+                        System.out.println("Enter the number of the room you would like to delete: ");
+                        int choice = scnr.nextInt();
+                        System.out.println("**NOTE you are deleting the room: '"+yourRooms[choice-1]+"' this action cannot be undone");
+                        System.out.println("Please re-enter the number: ");
+                        choice = scnr.nextInt();
+                        if(choice-1 <yourRooms.length && choice-1 >= 0){
+                            deleteRoom(yourRooms[choice-1]);
+                        }
+                    }
+                    
+                }else if(seeroom.equals("5") && userRooms(rooms, get_current_user())!=null){
+                    String[] yourRooms = userRooms(rooms, get_current_user());
+                    for(int x= 0; x<yourRooms.length; x++){
+                        System.out.println(x+1+": "+yourRooms[x]);
+                    }
                 }
             break;
             case "4":
@@ -336,6 +373,43 @@ public class App {
             break;
         }
         home();
+    }
+
+    public static void deleteRoom(String roomName){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("rooms");
+            Bson filter = Filters.and(Filters.eq("name", roomName), Filters.eq("user", get_current_user()));
+            collection.findOneAndDelete(filter);
+        }
+    }
+
+    public static String[] userRooms(String[] allRooms, String user){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("rooms");
+            Bson projectionFields = Projections.fields(
+                    Projections.include("name"),
+                    Projections.excludeId());
+            MongoCursor<Document> docs = collection.find(eq("user", user)).projection(projectionFields).iterator();
+            int length = (int)collection.countDocuments(eq("user", user));
+            if (length == 0){
+                return null;
+            }else{
+                String[] usersRooms = new String[length];
+                int x = 0;
+                if(length>1){
+                    while(docs.hasNext() && x<length){
+                        usersRooms[x] = docs.next().get("name")+"";
+                        x++;
+                    }
+                }
+                return usersRooms;
+            }
+
+        }
     }
 
     public static void seeProfile(String userName){
