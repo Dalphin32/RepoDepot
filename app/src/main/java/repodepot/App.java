@@ -23,7 +23,9 @@ import static com.mongodb.client.model.Filters.eq;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
 
 public class App {
     private static String current_user;
@@ -295,8 +297,7 @@ public class App {
                 System.out.println("[2] See A Room");
                 System.out.println("[3] Join A Room");
                 if(userRooms(rooms, get_current_user())!=null){
-                    System.out.println("[4] Delete A Room");
-                    System.out.println("[5] See Your Rooms");
+                    System.out.println("[4] See Your Rooms");
                 }
                 /*System.out.println("[5] Update Profile");
                 System.out.println("[6] Log out");*/
@@ -334,15 +335,17 @@ public class App {
                     System.out.println("Enter the number of the room you want to join:");
                     int roomNum = scnr.nextInt();
                     joinRoom(rooms[roomNum]);
-                }else if(seeroom.equals("4")){
+                }else if(seeroom.equals("4") && userRooms(rooms, get_current_user())!=null){
                     String[] yourRooms = userRooms(rooms, get_current_user());
-                    if(yourRooms == null){
-                        System.out.println("You have no rooms to delete");
-                    }else{
-                        System.out.println("Here are the rooms you can delete");
-                        for(int x= 0; x<yourRooms.length; x++){
-                            System.out.println(x+1+": "+yourRooms[x]);
-                        }
+                    for(int x= 0; x<yourRooms.length; x++){
+                        System.out.println(x+1+": "+yourRooms[x]);
+                    }
+                    System.out.println("Would you like to...");
+                    System.out.println("[1] Delete A Room");
+                    System.out.println("[2] Rename A Room");
+                    System.out.println("[3] Back To Home");
+                    String action = scnr.nextLine();
+                    if(action.equals("1")){
                         System.out.println("Enter the number of the room you would like to delete: ");
                         int choice = scnr.nextInt();
                         System.out.println("**NOTE you are deleting the room: '"+yourRooms[choice-1]+"' this action cannot be undone");
@@ -351,12 +354,21 @@ public class App {
                         if(choice-1 <yourRooms.length && choice-1 >= 0){
                             deleteRoom(yourRooms[choice-1]);
                         }
-                    }
-                    
-                }else if(seeroom.equals("5") && userRooms(rooms, get_current_user())!=null){
-                    String[] yourRooms = userRooms(rooms, get_current_user());
-                    for(int x= 0; x<yourRooms.length; x++){
-                        System.out.println(x+1+": "+yourRooms[x]);
+                    }else if(action.equals("2")){
+                        System.out.println("Enter the number of the room you would like to rename: ");
+                        int choice = scnr.nextInt();
+                        while(choice-1 >=yourRooms.length || choice-1 < 0){
+                            System.out.println("Invalid room number");
+                            System.out.println("Enter a valid room number from the list above: ");
+                            choice = scnr.nextInt();
+                        }
+                        System.out.println("Current Name: "+yourRooms[choice-1]);
+                        System.out.println("Enter the new name: ");
+                        String name = scnr.nextLine();
+                        renameRoom(yourRooms[choice-1], name);
+                        
+                    }else{
+                        home();
                     }
                 }
             break;
@@ -401,6 +413,18 @@ public class App {
         }
     }
 
+    public static void renameRoom(String roomName, String newName){
+        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+            MongoCollection<Document> collection = database.getCollection("rooms");
+            Bson filter = Filters.and(Filters.eq("name", roomName), Filters.eq("user", get_current_user()));
+            Bson update = Updates.set("name", newName);
+            UpdateResult result = collection.updateOne(filter, update);
+
+        }
+    }
+
     public static String[] userRooms(String[] allRooms, String user){
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
@@ -421,6 +445,8 @@ public class App {
                         usersRooms[x] = docs.next().get("name")+"";
                         x++;
                     }
+                }else{
+                    usersRooms[0] = collection.find(eq("user", user)).projection(projectionFields).first().get("name") + "";
                 }
                 return usersRooms;
             }
