@@ -316,21 +316,7 @@ public class App {
                     System.out.println("Enter the number of the user who's rooms you would like to see: ");
                     int choice = scnr.nextInt();
                     showRoom(users[choice]);
-                    /*System.out.println("Do you want to see a room? (y or n)");
-                    String see = scnr.next();
-                    if(see.equals("y")){
-                        System.out.println("Whos room do you want to see? (please enter user name)");
-                        String user = scnr.next();
-                        showRoom(user);
-                    }else{
-                        System.out.println("Do you want to join a room? (y or n)");
-                        String join = scnr.next();
-                        if(join.equals("y")){
-                            System.out.println("What Room do you want to join?");
-                            String room = scnr.next();
-                            //addUser(room);
-                        }
-                    }*/
+                    
                 }else if(seeroom.equals("3")){
                     System.out.println("Enter the number of the room you want to join:");
                     int roomNum = scnr.nextInt();
@@ -644,6 +630,7 @@ public class App {
 
 
     public static void showRoom(String user){
+        Scanner scnr = new Scanner(System.in);
         String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
@@ -652,29 +639,41 @@ public class App {
                 .sort(Sorts.descending("user")).iterator();
             try {
                 Bson projectionFields = Projections.fields(
-                    Projections.include("user", "name", "people"),
+                    Projections.include("user", "name", "userList"),
                     Projections.excludeId());
-                    MongoCursor<Document> docs = collection.find(eq("user", user))
+                MongoCursor<Document> docs = collection.find(eq("user", user))
                     .projection(projectionFields).iterator();
-                if (docs == null) {
-                    System.out.println("No results found.");
-                }else {
-                    int numDocs =(int) collection.countDocuments(eq("user", user));
-                    Document doc = collection.find(eq("user", user)).projection(projectionFields).first();
-                    if(doc == null){
-                        System.out.println("This user has no rooms!");
-                        return;
-                    }
-                    System.out.println("Room name: " + doc.get("name"));
-                    System.out.println("User: " + doc.get("user"));
-                    System.out.println("People in Room: " + doc.get("people"));
+                int numDocs =(int) collection.countDocuments(eq("user", user));
+                Document doc = collection.find(eq("user", user)).projection(projectionFields).first();
+
+                if(doc == null){
+                    System.out.println("This user has no rooms!");
+                    return;
+                }else{
+                    System.out.println("Welcom to " + doc.get("user") + "'s " + doc.get("name") + " room");
+                    System.out.println("People in Room: " + doc.get("userList"));
+                    System.out.println("other rooms they may have: ");
                     while(docs.hasNext() && numDocs !=1){
                         System.out.println("Room name: " + docs.next().get("name"));
                         System.out.println("User: " + docs.next().get("user"));
-                        System.out.println("People in Room: " + docs.next().get("people"));
+                        System.out.println("People in Room: " + docs.next().get("userList"));
+                    }
+                    System.out.println("[1] Send a message to this room");
+                    System.out.println("[2] See message with this room");
+                    System.out.println("[3] leave room");
+                    scnr.nextLine();
+                    String responce = scnr.nextLine();
+                    if(responce.equals("1")){
+                        System.out.println("What is your message?: ");
+                        scnr.nextLine();
+                        String body = scnr.nextLine();
+                    }else if(responce.equals("2")){
+
+                    }else if(responce.equals("3")){
+                        home();
                     }
                 }
-            } catch (MongoException me) {
+            }catch (MongoException me) {
                 System.err.println("Unable to read due to an error: " + me);
             }finally {
                 cursor.close();
