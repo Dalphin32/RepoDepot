@@ -23,6 +23,7 @@ import static com.mongodb.client.model.Filters.eq;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
@@ -295,9 +296,8 @@ public class App {
                 }
                 System.out.println("[1] Add A Room");
                 System.out.println("[2] See A Room");
-                System.out.println("[3] Join A Room");
                 if(userRooms(rooms, get_current_user())!=null){
-                    System.out.println("[4] See Your Rooms");
+                    System.out.println("[3] See Your Rooms");
                 }
                 /*System.out.println("[5] Update Profile");
                 System.out.println("[6] Log out");*/
@@ -313,15 +313,14 @@ public class App {
                     for(int x= 1; x<users.length; x++){
                         System.out.println(x+": "+users[x]);
                     }
-                    System.out.println("Enter the number of the user who's rooms you would like to see: ");
+                    System.out.println("Enter the user who's rooms you would like to see (type 0 if you changed your mind): ");
                     int choice = scnr.nextInt();
-                    showRoom(users[choice]);
-                    
-                }else if(seeroom.equals("3")){
-                    System.out.println("Enter the number of the room you want to join:");
-                    int roomNum = scnr.nextInt();
-                    joinRoom(rooms[roomNum]);
-                }else if(seeroom.equals("4") && userRooms(rooms, get_current_user())!=null){
+                    if(choice == 0){
+                        home();
+                    }else{
+                        showRoom(users[choice]);
+                    }
+                }else if(seeroom.equals("3") && userRooms(rooms, get_current_user())!=null){
                     String[] yourRooms = userRooms(rooms, get_current_user());
                     for(int x= 0; x<yourRooms.length; x++){
                         System.out.println(x+1+": "+yourRooms[x]);
@@ -329,7 +328,9 @@ public class App {
                     System.out.println("Would you like to...");
                     System.out.println("[1] Delete A Room");
                     System.out.println("[2] Rename A Room");
-                    System.out.println("[3] Back To Home");
+                    System.out.println("[3] Add use user to this room");
+                    System.out.println("[4] Remove user from this room");
+                    System.out.println("[5] Back To Home");
                     String action = scnr.nextLine();
                     if(action.equals("1")){
                         System.out.println("Enter the number of the room you would like to delete: ");
@@ -350,9 +351,17 @@ public class App {
                         }
                         System.out.println("Current Name: "+yourRooms[choice-1]);
                         System.out.println("Enter the new name: ");
+                        scnr.nextLine();
                         String name = scnr.nextLine();
                         renameRoom(yourRooms[choice-1], name);
                         
+                    }else if(action.equals("3")){
+                        for(int x= 1; x<users.length; x++){
+                            System.out.println(x+": "+users[x]);
+                        }
+                        System.out.println("Which user would you like to add?: ");
+                        int choice = scnr.nextInt();
+                        addUser(users[choice]);
                     }else{
                         home();
                     }
@@ -404,10 +413,14 @@ public class App {
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("rooms");
-            Bson filter = Filters.and(Filters.eq("name", roomName), Filters.eq("user", get_current_user()));
-            Bson update = Updates.set("name", newName);
-            UpdateResult result = collection.updateOne(filter, update);
-
+            UpdateOptions options = new UpdateOptions().upsert(true);
+            Document updateOneQuery = new Document().append("name", roomName);
+            Bson updateOneUpdates = Updates.combine(
+                    Updates.set("name", newName));
+            UpdateResult result = collection.updateOne(updateOneQuery, updateOneUpdates, options);
+        }
+        catch (MongoException me) {
+            System.err.println("Unable to insert due to an error: " + me);
         }
     }
 
@@ -567,11 +580,12 @@ public class App {
             MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
             MongoCollection<Document> collection = database.getCollection("rooms");
             try {
+                ArrayList<String> userList = new ArrayList<String>();
                 // Inserts a sample document describing a movie into the collection
                 InsertOneResult result = collection.insertOne(new Document()
                         .append("_id", new ObjectId())
                         .append("user", user)
-                        .append("userList", new ArrayList<String>())
+                        .append("userList", userList)
                         .append("name", roomName)
                         .append("decription", description));
                 // Prints the name of the inserted document
@@ -658,6 +672,7 @@ public class App {
                         System.out.println("User: " + docs.next().get("user"));
                         System.out.println("People in Room: " + docs.next().get("userList"));
                     }
+                    
                     System.out.println("[1] Send a message to this room");
                     System.out.println("[2] See message with this room");
                     System.out.println("[3] leave room");
@@ -667,8 +682,9 @@ public class App {
                         System.out.println("What is your message?: ");
                         scnr.nextLine();
                         String body = scnr.nextLine();
+                        sendMessage(body,user,false);
                     }else if(responce.equals("2")){
-
+                        //once reed messages is done then ill do this. other than that its done :)
                     }else if(responce.equals("3")){
                         home();
                     }
@@ -681,25 +697,22 @@ public class App {
         }
     }
 
-    public static void joinRoom(String room){
-        String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-        try (MongoClient mongoClient = MongoClients.create(uri)) {
-            MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
-            MongoCollection<Document> collection = database.getCollection("rooms");
-            try {
-                //im going to add them to a list of people depending on the room
-                // Document doc = collection.find(eq("name", room))
-                //     .projection(projectionFields)
-                //     .first();
+    public static void addUser(String user){
+        // String uri = "mongodb+srv://emCorey:test1234@cluster0.cwb4w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        // try (MongoClient mongoClient = MongoClients.create(uri)) {
+        //     MongoDatabase database = mongoClient.getDatabase("DolphinMangoCore");
+        //     MongoCollection<Document> collection = database.getCollection("rooms");
+        //     try {
+        //         for(int i = 0; i < userList.length(); i++){
 
-                
-                home();
+        //         }
+        //         home();
             
-            // Prints a message if any exceptions occur during the operation
-            } catch (MongoException me) {
-                System.err.println("Unable to insert due to an error: " + me);
-            }
-        }
+        //     // Prints a message if any exceptions occur during the operation
+        //     } catch (MongoException me) {
+        //         System.err.println("Unable to insert due to an error: " + me);
+        //     }
+        // }
     }
 
     public static void set_current_user(String user){
